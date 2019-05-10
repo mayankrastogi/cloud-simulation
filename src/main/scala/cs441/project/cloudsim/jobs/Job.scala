@@ -1,4 +1,4 @@
-package cs441.project.cloudsim
+package cs441.project.cloudsim.jobs
 
 import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
