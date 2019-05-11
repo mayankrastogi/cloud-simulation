@@ -28,10 +28,6 @@ class WebServiceJob_Random extends Job {
 
     this.client = new Client(broker)  //Set Client
     this.server = new Server()  //Set Server
-
-    //broker_for_random.submitCloudletList(client.getCloudletList().asJava) //Submit initial Cloudlet list before start of the simulation
-    //broker_for_random.submitVmList(server.getVmList.asJava) //Submit VM list before start of the simulation
-
     simulation.terminateAt(TIME_TO_TERMINATE_SIMULATION)
 
     //submit cloudlets on each clock tick of simulation using a Uniform distribution with a probabilty of 40%
