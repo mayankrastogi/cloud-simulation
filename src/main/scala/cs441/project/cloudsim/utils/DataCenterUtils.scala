@@ -4,6 +4,7 @@ import java.io.InvalidClassException
 
 import com.typesafe.config.{Config, ConfigBeanFactory}
 import com.typesafe.scalalogging.LazyLogging
+import cs441.project.cloudsim.policies.allocation.{VmAllocationPolicyNearestHost, VmAllocationPolicyRandom}
 import cs441.project.cloudsim.utils.config.{DataCenterConfig, HostConfig, SwitchConfig}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicy, VmAllocationPolicyBestFit, VmAllocationPolicyFirstFit, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.core.CloudSim
@@ -143,8 +144,8 @@ object DataCenterUtils extends LazyLogging {
   /**
     * Creates a new instance of the specified VM allocation policy.
     *
-    * Supported policy names are [BestFit, FirstFit, WorstFit]. If an invalid policy name is passed, the default value
-    * "WorstFit" will be used.
+    * Supported policy names are [BestFit, FirstFit, NearestHost, Random, WorstFit]. If an invalid policy name is
+    * passed, the default value "WorstFit" will be used.
     *
     * @param name Name of the policy (defaults to "WorstFit").
     * @return Instance of the specified policy.
@@ -153,6 +154,8 @@ object DataCenterUtils extends LazyLogging {
     name match {
       case "BestFit" => new VmAllocationPolicyBestFit()
       case "FirstFit" => new VmAllocationPolicyFirstFit()
+      case "NearestHost" => new VmAllocationPolicyNearestHost()
+      case "Random" => new VmAllocationPolicyRandom()
       case "Simple" | "WorstFit" => new VmAllocationPolicySimple()
       case _ =>
         logger.warn(s"Invalid VmAllocationPolicy: '$name'. Using 'Simple' (WorstFit) instead.")
