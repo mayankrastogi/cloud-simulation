@@ -1,9 +1,9 @@
 package cs441.project.cloudsim.jobs
 
-import cs441.project.cloudsim.Job
 import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, NetworkCloudlet}
+import org.cloudbus.cloudsim.core.Simulation
 import org.cloudbus.cloudsim.vms.{Vm, VmSimple}
 
 /**
@@ -13,10 +13,12 @@ class JobSimple extends Job {
 
   private var configId: Int = 0
   private var broker: DatacenterBroker = _
+  private var simulation: Simulation = _
 
-  override def setSimulation(configId: Int, broker: DatacenterBroker): Unit = {
+  override def setSimulation(configId: Int, broker: DatacenterBroker, simulation: Simulation): Unit = {
     this.configId = configId
     this.broker = broker
+    this.simulation = simulation
   }
 
   override def getVmList: List[Vm] = {

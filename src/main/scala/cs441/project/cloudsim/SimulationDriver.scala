@@ -70,7 +70,7 @@ object SimulationDriver {
 
     // Initialize the job
     // TODO: Figure out proper way to send configId
-    job.setSimulation(0, broker)
+    job.setSimulation(0, broker, simulation)
 
     // Fetch the VMs and Cloudlets
     val vmList = job.getVmList
