@@ -5,7 +5,7 @@ import java.io.InvalidClassException
 import com.typesafe.config.{Config, ConfigBeanFactory}
 import com.typesafe.scalalogging.LazyLogging
 import cs441.project.cloudsim.utils.config.{DataCenterConfig, HostConfig, SwitchConfig}
-import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicy
+import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicy, VmAllocationPolicyBestFit, VmAllocationPolicyFirstFit, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.core.CloudSim
 import org.cloudbus.cloudsim.datacenters.Datacenter
 import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter
@@ -13,6 +13,7 @@ import org.cloudbus.cloudsim.hosts.Host
 import org.cloudbus.cloudsim.hosts.network.NetworkHost
 import org.cloudbus.cloudsim.network.switches.{AggregateSwitch, EdgeSwitch, RootSwitch, Switch}
 import org.cloudbus.cloudsim.resources.{Pe, PeSimple}
+import org.cloudbus.cloudsim.schedulers.vm.{VmScheduler, VmSchedulerSpaceShared, VmSchedulerTimeShared}
 
 import scala.collection.JavaConverters._
 
@@ -45,11 +46,10 @@ object DataCenterUtils extends LazyLogging {
     *
     * @param simulation           The [[CloudSim]] simulation that this data center is part of.
     * @param dataCenterConfigList A list of [[DataCenterConfig]]s.
-    * @param vmAllocationPolicy   A function that supplies a new instance of a [[VmAllocationPolicy]] for the data center.
     * @return List of [[Datacenter]]s with the supplied configuration.
     */
-  def createDataCenters(simulation: CloudSim, dataCenterConfigList: List[DataCenterConfig], vmAllocationPolicy: () => VmAllocationPolicy): List[Datacenter] = {
-    logger.trace(s"createDataCenters(simulation: $simulation, dataCenterConfigList: $dataCenterConfigList, vmAllocationPolicy: $vmAllocationPolicy)")
+  def createDataCenters(simulation: CloudSim, dataCenterConfigList: List[DataCenterConfig]): List[Datacenter] = {
+    logger.trace(s"createDataCenters(simulation: $simulation, dataCenterConfigList: $dataCenterConfigList)")
 
     dataCenterConfigList.map { config =>
       // Create the host machines
@@ -59,8 +59,16 @@ object DataCenterUtils extends LazyLogging {
       val dataCenter = new NetworkDatacenter(
         simulation,
         hostList.asJava,
-        vmAllocationPolicy()
+        createVmAllocationPolicy(config.vmAllocationPolicy)
       )
+
+      // Set data center characteristics
+      dataCenter
+        .getCharacteristics
+        .setCostPerSecond(config.costPerSecond)
+        .setCostPerMem(config.costPerMemory)
+        .setCostPerStorage(config.costPerStorage)
+        .setCostPerBw(config.costPerBandwidth)
 
       // Set up the network in the data center
       createNetwork(
@@ -92,7 +100,8 @@ object DataCenterUtils extends LazyLogging {
       (1 to config.number)
         .map { _ =>
           val peList = createCPUs(config.cores, config.mips)
-          new NetworkHost(config.ram, config.bandwidth, config.storage, peList.asJava)
+          val host = new NetworkHost(config.ram, config.bandwidth, config.storage, peList.asJava)
+          host.setVmScheduler(createVmScheduler(config.vmScheduler))
         }
     }
   }
@@ -110,6 +119,45 @@ object DataCenterUtils extends LazyLogging {
         new PeSimple(mipsCapacity)
       }
       .toList
+  }
+
+  /**
+    * Creates a new instance of the specified VM scheduling policy.
+    *
+    * Supported policy names: [SpaceShared, TimeShared]. If an invalid policy name is passed, the default value
+    * "TimeShared" will be used.
+    *
+    * @param name Name of the policy (defaults to "TimeShared").
+    * @return Instance of the specified policy.
+    */
+  def createVmScheduler(name: String = "TimeShared"): VmScheduler = {
+    name match {
+      case "SpaceShared" => new VmSchedulerSpaceShared()
+      case "TimeShared" => new VmSchedulerTimeShared()
+      case _ =>
+        logger.warn(s"Invalid VmScheduler: '$name'. Using 'TimeShared' instead.")
+        new VmSchedulerTimeShared()
+    }
+  }
+
+  /**
+    * Creates a new instance of the specified VM allocation policy.
+    *
+    * Supported policy names are [BestFit, FirstFit, WorstFit]. If an invalid policy name is passed, the default value
+    * "WorstFit" will be used.
+    *
+    * @param name Name of the policy (defaults to "WorstFit").
+    * @return Instance of the specified policy.
+    */
+  def createVmAllocationPolicy(name: String = "WorstFit"): VmAllocationPolicy = {
+    name match {
+      case "BestFit" => new VmAllocationPolicyBestFit()
+      case "FirstFit" => new VmAllocationPolicyFirstFit()
+      case "Simple" | "WorstFit" => new VmAllocationPolicySimple()
+      case _ =>
+        logger.warn(s"Invalid VmAllocationPolicy: '$name'. Using 'Simple' (WorstFit) instead.")
+        new VmAllocationPolicySimple()
+    }
   }
 
   /**

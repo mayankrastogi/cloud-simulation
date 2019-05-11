@@ -1,9 +1,8 @@
 package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
-import cs441.project.cloudsim.jobs.JobSimple
+import cs441.project.cloudsim.jobs.{Job, JobSimple}
 import cs441.project.cloudsim.utils.DataCenterUtils
-import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyBestFit
 import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.core.CloudSim
@@ -45,9 +44,7 @@ object SimulationDriver {
       val dataCenterConfigList = DataCenterUtils.loadDataCenterConfigList(architectureConfig)
       val dataCenters = DataCenterUtils.createDataCenters(
         simulation,
-        dataCenterConfigList,
-        // TODO: Make VmAllocationPolicy configurable in the data center config
-        () => new VmAllocationPolicyBestFit()
+        dataCenterConfigList
       )
 
       // Submit the different jobs by creating a new broker for each job
@@ -62,7 +59,7 @@ object SimulationDriver {
   /**
     * Creates a new [[DatacenterBroker]] and submits the VMs and Cloudlets provided by the job to the broker.
     *
-    * @param job The [[Job]] to run in the data centers.
+    * @param job        The [[Job]] to run in the data centers.
     * @param simulation The [[CloudSim]] simulation in which this job should run.
     * @return The [[DatacenterBroker]] that was created for this job.
     */
