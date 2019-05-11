@@ -1,7 +1,8 @@
-package cs441.project.cloudsim
+package cs441.project.cloudsim.jobs
 
 import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
+import org.cloudbus.cloudsim.core.Simulation
 import org.cloudbus.cloudsim.vms.Vm
 
 /**
@@ -16,7 +17,7 @@ trait Job {
     * @param broker   Reference to the datacenter broker that the job may use for dynamic creation/submission of
     *                 cloudlets and VMs.
     */
-  def setSimulation(configId: Int, broker: DatacenterBroker): Unit
+  def setSimulation(configId: Int, broker: DatacenterBroker, simulation: Simulation): Unit
 
   /**
     * The VMs that this job needs for its execution.
