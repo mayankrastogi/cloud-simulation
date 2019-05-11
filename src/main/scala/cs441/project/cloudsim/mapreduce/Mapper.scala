@@ -51,11 +51,9 @@ class Mapper(mapperId: Int, length: Long, pes: Int) {
   }
 
 
-  def persistAndCommunicateMapResponse(destinationCloudlet: NetworkCloudlet, resultSize: Long): Unit = {
+  def persistAndCommunicateMapResponse(destinationCloudlet: NetworkCloudlet, resultSize: Long, packetSize: Int): Unit = {
 
     //TODO : Mimic some operation on Distributed File system
-    val fileSize = 129393 // Defines packets to send
-    val packetSize = 1024
     val numberOfPackets = (resultSize / packetSize).toInt
 
     addSendTask(destinationCloudlet, packetSize, numberOfPackets)
