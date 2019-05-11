@@ -6,7 +6,9 @@ import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.cloudlets.network.NetworkCloudlet
 import org.cloudbus.cloudsim.core.Simulation
+import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerTimeShared
 import org.cloudbus.cloudsim.vms.Vm
+import org.cloudbus.cloudsim.vms.network.NetworkVm
 
 /**
   * Models a resource manager, which takes in the Job requests allocated/schedules the jobs among the different available nodes.
@@ -62,8 +64,10 @@ class ResourceManager extends Job {
   }
 
 
-  def configureWorkerNodes() = {
+  def configureWorkerNodes(datacenterBroker: DatacenterBroker): List[NetworkVm] = {
 
+    val numberOfWorkerNodes = ConfigLoader.NUMBER_OF_WORKER_NODES
+    createAndSubmitVms(datacenterBroker, numberOfWorkerNodes)
 
   }
 
@@ -73,7 +77,7 @@ class ResourceManager extends Job {
     * @param jobConf Job config describing the hadoop job to run on the cluster
     */
 
-  def receiveJobRequest(job: String): Unit = {
+  def receiveJobRequest(job: String, datacenterBroker: DatacenterBroker): Unit = {
 
 
     val inputFileSize = ConfigLoader.INPUT_FILE_SIZE
@@ -85,7 +89,7 @@ class ResourceManager extends Job {
 
 
     //Define the Vms/Resources on which mappers and reducers are simulated
-    configureWorkerNodes()
+    configureWorkerNodes(datacenterBroker)
 
 
     //TODO : Decide on the mapperSize and its relation with the inputFileSize
@@ -111,6 +115,48 @@ class ResourceManager extends Job {
     val numberOfPacketsToReceive = 20
     reducers.map(reducer => reducer.run(memoryAllocated, getAssociatedMapper(reducer.getReducerId), numberOfPacketsToReceive))
 
+
+  }
+
+  /**
+    * creates a virtual machine with time shared cloudlet scheduler
+    *
+    * @param id        : VmID
+    * @param vmLength  : Length of VM in MIPS
+    * @param pesNumber ; Number of processing elements
+    * @param ram       : Ram size
+    * @param bw        : Bandwidth associated with VM
+    * @param vmSize    : The VM image size
+    * @return constructed [[NetworkVm]]
+    */
+
+  def createNetworkVm(id: Int, vmLength: Int, pesNumber: Int, ram: Int, bw: Int, vmSize: Int): NetworkVm = {
+    val vm = new NetworkVm(id, vmLength, pesNumber)
+    vm.setRam(ram).setBw(bw).setSize(vmSize).setCloudletScheduler(new CloudletSchedulerTimeShared)
+    vm
+
+  }
+
+  /**
+    * Creates a list of virtual machines in a Datacenter for a given broker
+    * and submit the list to the broker.
+    *
+    * @param broker The broker that will own the created VMs
+    * @return the list of created VMs
+    */
+
+  def createAndSubmitVms(datacenterBroker: DatacenterBroker, numberOfVms: Int): List[NetworkVm] = {
+
+
+    //TODO - MAKE IT CONFIGURABLE
+    val nodeLegth = List(1000, 2000, 3000, 40000, 5000)
+    val nodeRam = List(1024, 2048, 1024, 1024, 2048)
+    val nodeBandWidth = List(1000, 10000, 10000, 10000, 10000)
+    val nodeSize = List(1024, 1024, 1024, 1024, 1024)
+    val nodePesNumber = List(2, 2, 2, 2, 2)
+
+
+    (1 to numberOfVms).map(i => createNetworkVm(i, nodeLegth(i), nodePesNumber(i), nodeRam(i), nodeBandWidth(i), nodeSize(i))).toList
 
   }
 
