@@ -1,7 +1,7 @@
 package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
-import cs441.project.cloudsim.jobs.JobSimple
+import cs441.project.cloudsim.jobs.{Job, JobSimple}
 import cs441.project.cloudsim.utils.DataCenterUtils
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyBestFit
 import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}

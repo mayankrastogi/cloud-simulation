@@ -1,6 +1,5 @@
 package cs441.project.cloudsim.jobs
 
-import cs441.project.cloudsim.Job
 import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, NetworkCloudlet}
