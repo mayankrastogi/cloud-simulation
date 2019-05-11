@@ -62,7 +62,7 @@ object SimulationDriver {
   /**
     * Creates a new [[DatacenterBroker]] and submits the VMs and Cloudlets provided by the job to the broker.
     *
-    * @param job The [[Job]] to run in the data centers.
+    * @param job        The [[Job]] to run in the data centers.
     * @param simulation The [[CloudSim]] simulation in which this job should run.
     * @return The [[DatacenterBroker]] that was created for this job.
     */
@@ -73,7 +73,7 @@ object SimulationDriver {
 
     // Initialize the job
     // TODO: Figure out proper way to send configId
-    job.setSimulation(0, broker)
+    job.setSimulation(0, broker, simulation)
 
     // Fetch the VMs and Cloudlets
     val vmList = job.getVmList
