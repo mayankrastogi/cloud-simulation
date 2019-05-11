@@ -2,6 +2,11 @@ package cs441.project.cloudsim.utils.config
 
 import com.typesafe.config.ConfigFactory
 
+/**
+  * Map reduce Job config loader. Loads the specific Job configuration file from the resources directory
+  *
+  * @param jobId The id identifying the map reduce job in configs
+  */
 class MapReduceConfig(jobId: Int) {
   val configs = ConfigFactory.load("MapReduceJob")
 
@@ -22,7 +27,7 @@ class MapReduceConfig(jobId: Int) {
   val MAPPER_MEMORY_ALLOCATED = configs.getLong(path + ".mapperMemoryAllocated")
   val REDUCER_MEMORY_ALLOCATED = configs.getLong(path + ".reducerMemoryAllocated")
   val MAPPER_RESULT_SIZE = configs.getLongList(path + ".mapperResultSize")
-  val PACKET_SIZE = configs.getIntList(path + ".packetSize")
+  val PACKET_SIZE = configs.getInt(path + ".packetSize")
   val MAPPER_LENGTH = configs.getLong(path + ".mapperLength")
   val REDUCER_LENGTH = configs.getLong(path + ".reducerLength")
 

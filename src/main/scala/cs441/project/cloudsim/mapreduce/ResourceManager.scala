@@ -10,6 +10,8 @@ import org.cloudbus.cloudsim.core.Simulation
 import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerTimeShared
 import org.cloudbus.cloudsim.vms.Vm
 import org.cloudbus.cloudsim.vms.network.NetworkVm
+import scala.collection.JavaConverters._
+
 
 /**
   * Models a resource manager, which takes in the Job requests allocated/schedules the jobs among the different available nodes as specified by the job conf
@@ -17,7 +19,7 @@ import org.cloudbus.cloudsim.vms.network.NetworkVm
   * @param jobConf The id specifying the map reduce job config
   */
 
-class ResourceManager(jobConf: Int) extends Job {
+class ResourceManager(jobConf: Int, dataCenterBroker: DatacenterBroker) extends Job {
 
 
   //  val reducer = new Reducer
@@ -66,11 +68,21 @@ class ResourceManager(jobConf: Int) extends Job {
   }
 
 
-  def configureWorkerNodes(datacenterBroker: DatacenterBroker): List[NetworkVm] = {
+  def configureWorkerNodes(): List[NetworkVm] = {
 
     val numberOfWorkerNodes = mapReduceConf.NUMBER_OF_WORKER_NODES
-    createAndSubmitVms(datacenterBroker, numberOfWorkerNodes)
+    val workerNodes = createNetworkedVms(numberOfWorkerNodes)
+    dataCenterBroker.submitVmList(workerNodes.asJava)
+    workerNodes
 
+
+  }
+
+  def getNumberOfPackets(reducer: Reducer): Long = {
+
+
+    val resultSize: Long = mapReduceConf.MAPPER_RESULT_SIZE(reducer.getReducerId)
+    (resultSize / mapReduceConf.PACKET_SIZE).toLong
   }
 
   /**
@@ -91,33 +103,28 @@ class ResourceManager(jobConf: Int) extends Job {
 
 
     //Define the Vms/Resources on which mappers and reducers are simulated
-    configureWorkerNodes(datacenterBroker)
+    configureWorkerNodes()
 
 
-    //TODO : Decide on the mapperSize and its relation with the inputFileSize
-    //    val individualMapperSize = 1024
     val individualMapperSize = mapReduceConf.MAPPER_LENGTH
 
     // Allocate mappers job
     mappers = allocateMappers(numberOfMappers, inputSplitSize, individualMapperSize)
 
-    //Todo : Decide on the reducer length
     val reducerLength = mapReduceConf.REDUCER_LENGTH
 
     reducers = allocateReducers(numberOfReducers, reducerLength)
 
     val packetSize = mapReduceConf.PACKET_SIZE
-    //Todo: Decide on the result size
     val resultSize = mapReduceConf.MAPPER_RESULT_SIZE
-    mappers.foreach(mapper => mapper.persistAndCommunicateMapResponse(getAssociateReducer(mapper.getMapperId), resultSize(mapper.getMapperId),packetSize))
+
+    mappers.foreach(mapper => mapper.persistAndCommunicateMapResponse(getAssociateReducer(mapper.getMapperId), resultSize(mapper.getMapperId), packetSize))
 
     //Allocate reducers job
 
 
-    //Todo: Decide on memory allocated and number of packets
-    val memoryAllocated = mapReduceConf.REDUCER_MEMORY_ALLOCATED
-
-    reducers.map(reducer => reducer.run(memoryAllocated, getAssociatedMapper(reducer.getReducerId),(mapReduceConf.MAPPER_RESULT_SIZE(reducer.getReducerId)/packetSize)))
+    val reducerMemoryAllocated = mapReduceConf.REDUCER_MEMORY_ALLOCATED
+    reducers.map(reducer => reducer.run(reducerMemoryAllocated, getAssociatedMapper(reducer.getReducerId), getNumberOfPackets(reducer)))
 
 
   }
@@ -149,10 +156,9 @@ class ResourceManager(jobConf: Int) extends Job {
     * @return the list of created VMs
     */
 
-  def createAndSubmitVms(datacenterBroker: DatacenterBroker, numberOfVms: Int): List[NetworkVm] = {
+  def createNetworkedVms(numberOfVms: Int): List[NetworkVm] = {
 
     (1 to numberOfVms).map(i => createNetworkVm(i, mapReduceConf.NODES_LENGTH(i), mapReduceConf.NODES_PES(i), mapReduceConf.NODES_RAM(i), mapReduceConf.NODES_BANDWIDTH(i), mapReduceConf.NODES_SIZE(i))).toList
-
   }
 
 

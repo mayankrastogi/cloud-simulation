@@ -14,10 +14,20 @@ class Reducer(reducerId: Int, length: Long, pes: Int) {
 
   val cloudlet = new NetworkCloudlet(reducerId, length, pes)
 
+  /**
+    * Get the network cloudlet representing the reducer's tasks
+    *
+    * @return the [[NetworkCloudlet]] representing reducer
+    */
   def getReducerCloudlet: NetworkCloudlet = {
     cloudlet
   }
 
+  /**
+    * Get the Id associated with the reducer
+    *
+    * @return reducer Id
+    */
   def getReducerId: Int = {
     reducerId
   }
