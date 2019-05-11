@@ -10,6 +10,10 @@ object ConfigLoader {
 
   val INPUT_SPLIT_SIZE =  configs.getInt("inputSplitSize")
 
+  val MAP_TASK_LENGTH = configs.getLong("mapLength")
+
+
+
 
 
 }

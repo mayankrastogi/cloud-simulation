@@ -4,6 +4,7 @@ import com.typesafe.config.Config
 import cs441.project.cloudsim.Job
 import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
+import org.cloudbus.cloudsim.cloudlets.network.NetworkCloudlet
 import org.cloudbus.cloudsim.vms.Vm
 
 /**
@@ -11,18 +12,17 @@ import org.cloudbus.cloudsim.vms.Vm
   *
   */
 
-class ResourceManager extends Job{
+class ResourceManager extends Job {
 
+  val mapper = new Mapper
+  val reducer = new Reducer
 
-  def allocateMappers(numberOfMappers: Int, inputSplitSize: Int) = {
-
-
-
-
-
+  def allocateMappers(numberOfMappers: Int, inputSplitSize: Int): List[NetworkCloudlet] = {
 
 
   }
+
+  def allocateReducers(numberOfReducers: Int): List[NetworkCloudlet] = {}
 
   /**
     * Receives the Job requests and schedules the job tasks among the worker nodes.
@@ -36,20 +36,21 @@ class ResourceManager extends Job{
     val inputFileSize = ConfigLoader.INPUT_FILE_SIZE
     val inputSplitSize = ConfigLoader.INPUT_SPLIT_SIZE
 
-    val numberOfMappers = inputFileSize / inputSplitSize
+    // Decide on the number mappers and reducers based on the Input file size and the split size
 
-    val mapperTasks = allocateMappers(numberOfMappers,inputSplitSize);
+    val numberOfMappers, numberOfReducers = inputFileSize / inputSplitSize
+
+    // Allocate mappers job
+    val mappers = allocateMappers(numberOfMappers, inputSplitSize)
+
+    //Allocate reducers job
+    val reducers = allocateReducers(numberOfReducers)
 
 
-    //
+    //Define the Vms/Resources on which mappers and reducers are simulated
 
 
   }
-
-
-
-
-
 
 
   /**
