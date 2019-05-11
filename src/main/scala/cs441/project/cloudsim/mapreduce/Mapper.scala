@@ -1,50 +1,80 @@
 package cs441.project.cloudsim.mapreduce
 
-import cs441.project.cloudsim.Job
+import cs441.project.cloudsim.jobs.Job
 import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, CloudletReceiveTask, CloudletTask, NetworkCloudlet, CloudletSendTask}
-
 
 /**
   * Defines an individual mapper which will work on a particular file split and executes the map task [[CloudletExecutionTask]]
   * After done with execution it will emit/write the map result simulated using the [[CloudletSendTask]]
+  *
+  * @param mapperId
+  * @param length
+  * @param pes
   */
-class Mapper {
+class Mapper(mapperId: Int, length: Long, pes: Int) {
+
+  val cloudlet = new NetworkCloudlet(mapperId, length, pes)
 
 
-  def run(mapperId : String, length:Long): Unit =
-  {
+  def getMapperId: Int = {
+    mapperId
+  }
+
+  def getMapperCloudlet: NetworkCloudlet = cloudlet
+
+  /**
+    * Defines an individual map task running specific task each
+    *
+    * @param memoryAllocated memory allocated for each mapper
+    * @return [[NetworkCloudlet]] representing the running mapper
+    */
+  def run(memoryAllocated: Long): Mapper = {
 
 
+    //TODO : Mimic some operation on Distributed File system
+
+    // Adding an execution task for this mapper
+    addExecutionTask(memoryAllocated)
+
+    this
+  }
+
+  /**
+    * Adds an execution task to the list of tasks of the given [[NetworkCloudlet]]
+    *
+    * @param taskMemory the execution length of the task
+    */
+  protected def addExecutionTask(taskMemory: Long): Unit = {
+    val task = new CloudletExecutionTask(cloudlet.getTasks.size, length)
+    task.setMemory(taskMemory)
+    cloudlet.addTask(task)
+  }
+
+
+  def persistAndCommunicateMapResponse(destinationCloudlet: NetworkCloudlet, resultSize: Long): Unit = {
+
+    //TODO : Mimic some operation on Distributed File system
+    val fileSize = 129393 // Defines packets to send
+    val packetSize = 1024
+    val numberOfPackets = (resultSize / packetSize).toInt
+
+    addSendTask(destinationCloudlet, packetSize, numberOfPackets)
 
 
   }
 
   /**
-    * Adds an execution task to the list of tasks of the given [[NetworkCloudlet]] .
+    * Adds a send task to the list of tasks of the given {@link NetworkCloudlet}.
     *
-    * @param cloudlet the [[NetworkCloudlet]] the task will belong to
+    * @param sourceCloudlet      the { @link NetworkCloudlet} from which packets will be sent
+    * @param destinationCloudlet the destination { @link NetworkCloudlet} to send packets to
     */
-  protected def addExecutionTask(cloudlet: NetworkCloudlet): Unit = {
-    val task = new CloudletExecutionTask(cloudlet.getTasks.size, NETCLOUDLET_EXECUTION_TASK_LENGTH)
-    task.setMemory(NETCLOUDLET_RAM)
+  protected def addSendTask(destinationCloudlet: NetworkCloudlet, packetLength: Long, numberOfPacketSends: Int): Unit = {
+    val task = new CloudletSendTask(cloudlet.getTasks.size)
+    task.setMemory(length)
     cloudlet.addTask(task)
+    (1 to numberOfPacketSends).map(_ => task.addPacket(destinationCloudlet, packetLength))
   }
-
-  /**
-    * Adds a receive task to the list of tasks of the given  [[NetworkCloudlet]].
-    *
-    * @param cloudlet the  [[NetworkCloudlet]] the task will belong to
-    * @param sourceCloudlet the  [[NetworkCloudlet]] expected to receive packets from
-    */
-  protected def addReceiveTask(cloudlet: NetworkCloudlet, sourceCloudlet: NetworkCloudlet): Unit = {
-    val task = new CloudletReceiveTask(cloudlet.getTasks.size, sourceCloudlet.getVm)
-    task.setMemory(NETCLOUDLET_RAM)
-    task.setExpectedPacketsToReceive(NUMBER_OF_PACKETS_TO_SEND)
-    cloudlet.addTask(task)
-  }
-
-
-
 
 
 }
