@@ -2,6 +2,7 @@ package cs441.project.cloudsim.mapreduce
 
 import cs441.project.cloudsim.jobs.Job
 import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, CloudletReceiveTask, CloudletTask, NetworkCloudlet, CloudletSendTask}
+import scala.collection.JavaConverters._
 
 /**
   * Defines an individual mapper which will work on a particular file split and executes the map task [[CloudletExecutionTask]]
@@ -13,9 +14,31 @@ import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, CloudletR
   */
 class Mapper(mapperId: Int, length: Long, pes: Int) {
 
+  var numberOfPackets: Int = _
+
+  /**
+    * Sets the resultant number of packets to be sent by the mapper
+    *
+    * @param numberOfPackets The number of packets
+    */
+  def setResultsPackets(numberOfPackets: Int): Unit = this.numberOfPackets = numberOfPackets
+
+  /**
+    * Gets the number of packets sent
+    *
+    * @return numberOfPackets
+    */
+  def getResultsPackets: Int = this.numberOfPackets
+
+
   val cloudlet = new NetworkCloudlet(mapperId, length, pes)
 
 
+  /**
+    * Gets the mapper Id
+    *
+    * @return the mapper Id
+    */
   def getMapperId: Int = {
     mapperId
   }
@@ -29,7 +52,6 @@ class Mapper(mapperId: Int, length: Long, pes: Int) {
     * @return [[NetworkCloudlet]] representing the running mapper
     */
   def run(memoryAllocated: Long): Mapper = {
-
 
     //TODO : Mimic some operation on Distributed File system
 
@@ -50,11 +72,14 @@ class Mapper(mapperId: Int, length: Long, pes: Int) {
     cloudlet.addTask(task)
   }
 
-
-  def persistAndCommunicateMapResponse(destinationCloudlet: NetworkCloudlet, resultSize: Long, packetSize: Int): Unit = {
-
-    //TODO : Mimic some operation on Distributed File system
-    val numberOfPackets = (resultSize / packetSize).toInt
+  /**
+    * Persists and communicates the mappers result
+    *
+    * @param destinationCloudlet The cloudlet that will receive the mappers result
+    * @param numberOfPackets     the number packets representing the result
+    * @param packetSize          the size of individual packet
+    */
+  def persistAndCommunicateMapResponse(destinationCloudlet: NetworkCloudlet, numberOfPackets: Int, packetSize: Int): Unit = {
 
     addSendTask(destinationCloudlet, packetSize, numberOfPackets)
 
@@ -69,7 +94,7 @@ class Mapper(mapperId: Int, length: Long, pes: Int) {
     */
   protected def addSendTask(destinationCloudlet: NetworkCloudlet, packetLength: Long, numberOfPacketSends: Int): Unit = {
     val task = new CloudletSendTask(cloudlet.getTasks.size)
-    task.setMemory(length)
+    task.setMemory(length / 2)
     cloudlet.addTask(task)
     (1 to numberOfPacketSends).map(_ => task.addPacket(destinationCloudlet, packetLength))
   }
