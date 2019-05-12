@@ -2,11 +2,12 @@ package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
 import cs441.project.cloudsim.jobs.{Job, JobSimple}
+import cs441.project.cloudsim.policies.loadbalancing.DatacenterBrokerMaxMin
 import cs441.project.cloudsim.utils.DataCenterUtils
-import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}
+import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.core.CloudSim
-import org.cloudsimplus.builders.tables.CloudletsTableBuilder
+import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 
 import scala.collection.JavaConverters._
 
@@ -66,7 +67,7 @@ object SimulationDriver {
   def submitJob(job: Job, simulation: CloudSim): DatacenterBroker = {
 
     // Create a new broker for this job
-    val broker = new DatacenterBrokerSimple(simulation)
+    val broker = new DatacenterBrokerMaxMin(simulation)
 
     // Initialize the job
     // TODO: Figure out proper way to send configId
@@ -90,10 +91,12 @@ object SimulationDriver {
     * @param brokers List of brokers in the simulation.
     */
   def printResults(brokers: List[DatacenterBroker]): Unit = {
-    // TODO: Show info about bytes sent/received as well
     brokers.foreach { broker =>
       new CloudletsTableBuilder(broker.getCloudletFinishedList.asInstanceOf[java.util.List[Cloudlet]])
         .setTitle(s"SIMULATION RESULTS: ${broker.getName}")
+        .addColumn(new TextTableColumn("CPU Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getCostPerSec * cloudlet.getActualCpuTime))
+        .addColumn(new TextTableColumn("Bandwidth Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getAccumulatedBwCost))
+        .addColumn(new TextTableColumn("Total Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getTotalCost))
         .build()
     }
   }
