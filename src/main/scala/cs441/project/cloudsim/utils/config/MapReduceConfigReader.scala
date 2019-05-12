@@ -8,7 +8,7 @@ import scala.collection.JavaConverters._
   *
   * @param jobId The id identifying the map reduce job in configs
   */
-class MapReduceConfig(jobId: Int) {
+class MapReduceConfigReader(jobId: Int) {
   val AllConfs = ConfigFactory.load("MapReduceJob")
 
   val jobConf = AllConfs.getConfigList("MapReduce").get(jobId)
@@ -18,7 +18,7 @@ class MapReduceConfig(jobId: Int) {
   val INPUT_FILE_SIZE = jobConf.getInt(path + "inputFileSize") * 1024 * 1024 * 1024 //Converting Gigs to bytes
 
 
-  val INPUT_SPLIT_SIZE = jobConf.getInt(path + "inputSplitSize") * 1024 * 1024
+  val INPUT_SPLIT_SIZE = jobConf.getInt(path + "inputSplitSize") * 1024 * 1024 // Converting Mbs to bytes
 
   val NUMBER_OF_WORKER_NODES = jobConf.getInt(path + "numberOfNodesAvailable")
 
