@@ -38,36 +38,42 @@ object SimulationDriver extends LazyLogging {
     // Simulate the different cloud architectures and run jobs on them
     cloudArchitectures.foreach { architectureConfig =>
 
+      val iterations = architectureConfig.getInt("iterations")
       logger.info(s"Starting simulation for architecure: ${architectureConfig.getString("name")}")
-
-      // Create a new simulation
-      val simulation = new CloudSim()
-
-      // Initialize the data centers for this simulation
-      val dataCenterConfigList = DataCenterUtils.loadDataCenterConfigList(architectureConfig)
-      val dataCenters = DataCenterUtils.createDataCenters(
-        simulation,
-        dataCenterConfigList
-      )
+      logger.info(s"The simulation will run for $iterations iterations")
 
       // Get the load balancer to use from the config
       val loadBalancer = architectureConfig.getString("load-balancer")
       logger.info(s"Simulation will use load balancer: $loadBalancer")
 
-      // Load the jobs that will be run on each cloud architecture
-      val jobs: List[Job] =
-        (1 to MapReduceConfig.getNumberOfJobs).map(_ => new ResourceManager)
-          .toList
+      (1 to iterations).foreach { i =>
+        logger.info(s"Initializing simulation for iteration: $i")
 
-      // Submit the different jobs by creating a new broker for each job
-      val brokers = jobs.map(submitJob(_, simulation, loadBalancer))
-      logger.info("Submitted creation of VMs and Cloudlets for all jobs.")
+        // Create a new simulation
+        val simulation = new CloudSim()
 
-      // Run the simulation and print the results
-      logger.info("Starting simulation...")
-      simulation.start()
-      logger.info("Simulation completed.")
-      printResults(brokers)
+        // Initialize the data centers for this simulation
+        val dataCenterConfigList = DataCenterUtils.loadDataCenterConfigList(architectureConfig)
+        val dataCenters = DataCenterUtils.createDataCenters(
+        simulation,
+        dataCenterConfigList
+        )
+
+        // Load the jobs that will be run on each cloud architecture
+        val jobs: List[Job] =
+          (1 to MapReduceConfig.getNumberOfJobs).map(_ => new ResourceManager)
+            .toList
+
+        // Submit the different jobs by creating a new broker for each job
+        val brokers = jobs.map(submitJob(_, simulation, loadBalancer))
+        logger.info("Submitted creation of VMs and Cloudlets for all jobs.")
+
+        // Run the simulation and print the results
+        logger.info("Starting simulation...")
+        simulation.start()
+        logger.info("Simulation completed.")
+        printResults(brokers)
+      }
     }
   }
 
