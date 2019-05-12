@@ -19,7 +19,7 @@ class WebServiceJob_Random extends Job {
   private var simulation: Simulation = _
   private var client: Client = _
   private var server: Server = _
-  private var TIME_TO_TERMINATE_SIMULATION: Int = 60
+  private var TIME_TO_TERMINATE_SIMULATION: Int = 60 * 30
 
   override def setSimulation(configId: Int, broker: DatacenterBroker, simulation: Simulation): Unit = {
     this.configId = configId
@@ -56,5 +56,5 @@ class WebServiceJob_Random extends Job {
   override def getCloudletList: List[Cloudlet] = {
     client.getCloudletList()
   }
-  
+
 }

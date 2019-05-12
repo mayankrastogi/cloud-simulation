@@ -13,11 +13,11 @@ import org.cloudsimplus.listeners.EventInfo
 class Client (broker: DatacenterBroker) {
 
   //Cloudlet Characteristics to be read from configuration file
-  var CLOUDLET_PES:Int = 2
-  var CLOUDLET_LENGTH: Int = 10000
+  var CLOUDLET_PES:Int = 5
+  var CLOUDLET_LENGTH: Int = 50000
   var INITIAL_CLOUDLET_NUMBER: Int = 5  //Number of Cloudlets to be statically created when the simulation starts
-  var filesize:Int = 1024
-  var outputsize: Int = 1024
+  var filesize:Int = 3024
+  var outputsize: Int = 5024
 
   var cloudletList: List[Cloudlet] = (1 to INITIAL_CLOUDLET_NUMBER).map{_ => createCloudlet()}.toList
 
