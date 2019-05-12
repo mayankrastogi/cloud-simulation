@@ -2,9 +2,11 @@ package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
-import cs441.project.cloudsim.jobs.{Job, JobSimple}
+import cs441.project.cloudsim.jobs.Job
+import cs441.project.cloudsim.jobs.mapreduce.ResourceManager
 import cs441.project.cloudsim.policies.loadbalancing.{DatacenterBrokerMaxMin, DatacenterBrokerMinMin}
 import cs441.project.cloudsim.utils.DataCenterUtils
+import cs441.project.cloudsim.utils.config.MapReduceConfig
 import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.core.CloudSim
@@ -32,9 +34,6 @@ object SimulationDriver extends LazyLogging {
     val config = ConfigFactory.load()
     val cloudArchitectures = config.getConfigList("architectures").asScala
 
-    // Load the jobs that will be run on each cloud architecture
-    // TODO: Update jobs list, possibly make it dynamic
-    val jobs: List[Job] = List(new JobSimple)
 
     // Simulate the different cloud architectures and run jobs on them
     cloudArchitectures.foreach { architectureConfig =>
@@ -54,6 +53,11 @@ object SimulationDriver extends LazyLogging {
       // Get the load balancer to use from the config
       val loadBalancer = architectureConfig.getString("load-balancer")
       logger.info(s"Simulation will use load balancer: $loadBalancer")
+
+      // Load the jobs that will be run on each cloud architecture
+      val jobs: List[Job] =
+        (1 to MapReduceConfig.getNumberOfJobs).map(_ => new ResourceManager)
+          .toList
 
       // Submit the different jobs by creating a new broker for each job
       val brokers = jobs.map(submitJob(_, simulation, loadBalancer))
