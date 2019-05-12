@@ -1,7 +1,7 @@
 package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
-import cs441.project.cloudsim.jobs.WebService.WebServiceJob_Random
+import cs441.project.cloudsim.jobs.WebService.WebService
 import cs441.project.cloudsim.jobs.{Job, JobSimple}
 import cs441.project.cloudsim.utils.DataCenterUtils
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyBestFit
@@ -34,7 +34,7 @@ object SimulationDriver {
 
     // Load the jobs that will be run on each cloud architecture
     // TODO: Update jobs list, possibly make it dynamic
-    var jobs: List[Job] = List(new WebServiceJob_Random)
+    var jobs: List[Job] = List(new WebService)
 
     // Simulate the different cloud architectures and run jobs on them
     cloudArchitectures.foreach { architectureConfig =>
@@ -50,7 +50,7 @@ object SimulationDriver {
         // TODO: Make VmAllocationPolicy configurable in the data center config
         () => new VmAllocationPolicyBestFit()
       )
-
+      dataCenters.head.setSchedulingInterval(5)
       // Submit the different jobs by creating a new broker for each job
       val brokers = jobs.map(submitJob(_, simulation))
 
@@ -76,9 +76,11 @@ object SimulationDriver {
     // TODO: Figure out proper way to send configId
     job.setSimulation(0, broker, simulation)
 
-    // Fetch the VMs and Cloudlets
     val vmList = job.getVmList
+
     val cloudletList = job.getCloudletList
+    // Fetch the VMs and Cloudlets
+
 
     // Spin up the VMs and submit the cloudlets to them
     broker.submitVmList(vmList.asJava)

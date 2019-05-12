@@ -1,62 +1,67 @@
 package cs441.project.cloudsim.jobs.WebService
 
-import com.typesafe.config.Config
+import cs441.project.cloudsim.utils.config.WebServiceConfigReader
 import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerTimeShared
 import org.cloudbus.cloudsim.vms.{Vm, VmSimple}
 import org.cloudsimplus.autoscaling.{HorizontalVmScaling, HorizontalVmScalingSimple}
 
-class Server(config: Config) {
+class Server(serviceID: Int) {
 
-  //TO Read from Configuration File
-  val VMS: Int = config.getInt("Vms.VMS_NUMBER")
-  val VM_PES: Int = config.getInt("Vms.VM_PES")
-  val VM_MIPS: Int = config.getInt("Vms.VM_MIPS")
-  val VM_BW: Int = config.getInt("Vms.VM_BW")
-  val VM_RAM: Int = config.getInt("Vms.VM_RAM")
-  val VM_SIZE: Int = config.getInt("Vms.VM_SIZE")
-  var vm_id: Int = VMS
 
-  def initiate_autoscale(): Boolean = {
+  val serviceConf = new WebServiceConfigReader(serviceID)
+
+  var vmID = 1
+
+  var activeInstances: List[Vm] = _
+
+  def initiate_autoscale = {
     //Create list of scalable VMs
 
-    this.getVmList.foreach(vm => createHorizontalVmScaling(vm))
+    this.getVmList.foreach(vm => {
 
-    return true
+      createHorizontalVmScaling(vm)
+    })
   }
 
   def getVmList: List[Vm] = {
-    (1 to VMS)
-      .map { x =>
-        new VmSimple(x, VM_MIPS, VM_PES)
-          .setBw(VM_BW)
-          .setRam(VM_RAM)
-          .setSize(VM_SIZE)
-          .setCloudletScheduler(new CloudletSchedulerTimeShared)
-      }
-      .toList
+    activeInstances = (1 to serviceConf.VMS).map(x => new VmSimple(x, serviceConf.VM_MIPS, serviceConf.VM_PES).setBw(serviceConf.VM_BW).setRam(serviceConf.VM_RAM)
+      .setSize(serviceConf.VM_SIZE)
+      .setCloudletScheduler(new CloudletSchedulerTimeShared)
+    ).toList
+    activeInstances
   }
 
-  def createHorizontalVmScaling(vm: Vm): Unit = {
-    var horizontalScaling: HorizontalVmScaling = new HorizontalVmScalingSimple()
-    horizontalScaling.setVmSupplier(() => createVm).setOverloadPredicate(vm => isVmOverloaded(vm))
-    vm.setHorizontalScaling(new HorizontalVmScalingSimple)
-  }
 
-  def isVmOverloaded(vm: Vm): Boolean = {
-    if (vm.getCpuPercentUsage > 0.7) {
-      return true
-    }
-    else {
-      return false
-    }
-  }
+  /**
+    * A {@link Predicate} that checks if a given VM is overloaded or not,
+    * based on upper CPU utilization threshold.
+    * A reference to this method is assigned to each {@link HorizontalVmScaling} created.
+    *
+    * @param vm the VM to check if it is overloaded
+    * @return true if the VM is overloaded, false otherwise
+    * @see #createHorizontalVmScaling(Vm)
+    */
+  private def isVmOverloaded(vm: Vm) = vm.getCpuPercentUsage > 0.7
+
 
   def createVm(): Vm = {
-    vm_id = vm_id + 1
-    return new VmSimple(vm_id, VM_MIPS, VM_PES)
-      .setBw(VM_BW)
-      .setRam(VM_RAM)
-      .setSize(VM_SIZE)
+    vmID = vmID + 1
+    return new VmSimple(vmID, serviceConf.VM_MIPS, serviceConf.VM_PES)
+      .setBw(serviceConf.VM_BW)
+      .setRam(serviceConf.VM_RAM)
+      .setSize(serviceConf.VM_SIZE)
       .setCloudletScheduler(new CloudletSchedulerTimeShared)
+  }
+
+  /**
+    * Creates a {@link HorizontalVmScaling} object for a given VM.
+    *
+    * @param vm the VM for which the Horizontal Scaling will be created
+    * @see #createListOfScalableVms(int)
+    */
+  private def createHorizontalVmScaling(vm: Vm): Unit = {
+    val horizontalScaling = new HorizontalVmScalingSimple
+    horizontalScaling.setVmSupplier(() => createVm()).setOverloadPredicate(isVmOverloaded)
+    vm.setHorizontalScaling(horizontalScaling)
   }
 }
