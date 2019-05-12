@@ -1,10 +1,11 @@
 package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.LazyLogging
 import cs441.project.cloudsim.jobs.{Job, JobSimple}
-import cs441.project.cloudsim.policies.loadbalancing.DatacenterBrokerMaxMin
+import cs441.project.cloudsim.policies.loadbalancing.{DatacenterBrokerMaxMin, DatacenterBrokerMinMin}
 import cs441.project.cloudsim.utils.DataCenterUtils
-import org.cloudbus.cloudsim.brokers.DatacenterBroker
+import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.core.CloudSim
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
@@ -18,7 +19,7 @@ import scala.collection.JavaConverters._
   * submitting cloudlets to them along with the desired scheduling, load-balancing, and auto-scaling policies. The
   * results of running these jobs are printed to the console once the simulation completes for each cloud architecture.
   */
-object SimulationDriver {
+object SimulationDriver extends LazyLogging {
 
   /**
     * Entry point for the driver program.
@@ -38,6 +39,8 @@ object SimulationDriver {
     // Simulate the different cloud architectures and run jobs on them
     cloudArchitectures.foreach { architectureConfig =>
 
+      logger.info(s"Starting simulation for architecure: ${architectureConfig.getString("name")}")
+
       // Create a new simulation
       val simulation = new CloudSim()
 
@@ -48,11 +51,18 @@ object SimulationDriver {
         dataCenterConfigList
       )
 
+      // Get the load balancer to use from the config
+      val loadBalancer = architectureConfig.getString("load-balancer")
+      logger.info(s"Simulation will use load balancer: $loadBalancer")
+
       // Submit the different jobs by creating a new broker for each job
-      val brokers = jobs.map(submitJob(_, simulation))
+      val brokers = jobs.map(submitJob(_, simulation, loadBalancer))
+      logger.info("Submitted creation of VMs and Cloudlets for all jobs.")
 
       // Run the simulation and print the results
+      logger.info("Starting simulation...")
       simulation.start()
+      logger.info("Simulation completed.")
       printResults(brokers)
     }
   }
@@ -64,10 +74,14 @@ object SimulationDriver {
     * @param simulation The [[CloudSim]] simulation in which this job should run.
     * @return The [[DatacenterBroker]] that was created for this job.
     */
-  def submitJob(job: Job, simulation: CloudSim): DatacenterBroker = {
+  def submitJob(job: Job, simulation: CloudSim, loadBalancer: String): DatacenterBroker = {
 
     // Create a new broker for this job
-    val broker = new DatacenterBrokerMaxMin(simulation)
+    val broker = loadBalancer match {
+      case "MaxMin" => new DatacenterBrokerMaxMin(simulation)
+      case "MinMin" => new DatacenterBrokerMinMin(simulation)
+      case "Default" | _ => new DatacenterBrokerSimple(simulation)
+    }
 
     // Initialize the job
     // TODO: Figure out proper way to send configId
