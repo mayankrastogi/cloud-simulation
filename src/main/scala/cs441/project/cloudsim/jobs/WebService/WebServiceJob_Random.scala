@@ -27,13 +27,26 @@ class WebServiceJob_Random extends Job {
     this.simulation = simulation
 
     this.client = new Client(broker)  //Set Client
-    this.server = new Server()  //Set Server
+    this.server = new Server(simulation)  //Set Server
     simulation.terminateAt(TIME_TO_TERMINATE_SIMULATION)
 
     //submit cloudlets on each clock tick of simulation using a Uniform distribution with a probabilty of 40%
     simulation.addOnClockTickListener(client.submitRandomCloudelts)
 
-    /*Autoscaling comes into motion here*/
+    /*
+     *  Autoscaling comes into motion here...
+     *
+     *  A feature of verticalCPU scaling according to the dynamic threshold of the Cloudlets.
+     *  Every VM will check at specific time intervals if its PEs are under/over utilized according to a
+     *  dynamic computed utilization threshold. Then it requests such PEs to be up or down scaled.
+     */
+
+    var flag: Boolean = server.initiate_autoscale()
+
+    if(flag.equals(true)){
+      print("Auto Scaling Enabled..!!")
+    }
+
   }
 
   override def getVmList: List[Vm] = {
@@ -43,5 +56,5 @@ class WebServiceJob_Random extends Job {
   override def getCloudletList: List[Cloudlet] = {
     client.getCloudletList()
   }
-
+  
 }
