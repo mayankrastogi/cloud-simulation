@@ -1,14 +1,14 @@
 package cs441.project.cloudsim.tests
 
-import cs441.project.cloudsim.policies.loadbalancing.DatacenterBrokerMinMin
+import cs441.project.cloudsim.policies.loadbalancing.{DatacenterBrokerMaxMin, DatacenterBrokerMinMin}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.core.CloudSim
 import org.cloudbus.cloudsim.vms.{Vm, VmSimple}
 import org.scalatest.{FunSuite, Matchers}
 
-class DatacenterBrokerMinMinTest extends FunSuite with Matchers {
+class DatacenterBrokerMaxMinTest extends FunSuite with Matchers {
 
-  val broker = new DatacenterBrokerMinMin(new CloudSim)
+  val broker = new DatacenterBrokerMaxMin(new CloudSim)
 
   test("estimateExecutionTimeAndGetMin should return minimum execution time") {
     val vms = createVMs(3)
@@ -18,12 +18,12 @@ class DatacenterBrokerMinMinTest extends FunSuite with Matchers {
     minTime shouldBe 0.083 +- 0.01
   }
 
-  test("mapCloudletsMinMin should have the cloudlet lists sorted by their execution times") {
+  test("mapCloudletsMaxMin should have the cloudlet lists sorted by their execution times") {
     val vms = createVMs(3)
     val cloudlets = createCloudlets(3)
-    val sortedCloudlets = broker.mapCloudletsMinMin(cloudlets, vms)
+    val sortedCloudlets = broker.mapCloudletsMaxMin(cloudlets, vms)
 
-    sortedCloudlets.map(_.getId) shouldBe sorted
+    sortedCloudlets.map(_.getId).reverse shouldBe sorted
   }
 
   def createVMs(number: Int): List[Vm] = {
