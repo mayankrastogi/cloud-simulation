@@ -2,6 +2,7 @@ package cs441.project.cloudsim.mapreduce
 
 import com.typesafe.config.ConfigFactory
 import cs441.project.cloudsim.SimulationDriver.printResults
+import cs441.project.cloudsim.jobs.Job
 import cs441.project.cloudsim.utils.DataCenterUtils
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyBestFit
 import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple
@@ -30,8 +31,10 @@ object MapReduceApplication extends App {
       // TODO: Make VmAllocationPolicy configurable in the data center config
     )
     val broker = new DatacenterBrokerSimple(simulation)
-    val resourceManager: ResourceManager = new ResourceManager(0, broker)
-    resourceManager.receiveJobRequest()
+    val myJob: Job = new ResourceManager
+
+    myJob.setSimulation(0,broker,simulation)
+
     simulation.start()
 
     new CloudletsTableBuilder(broker.getCloudletFinishedList.asInstanceOf[java.util.List[Cloudlet]])

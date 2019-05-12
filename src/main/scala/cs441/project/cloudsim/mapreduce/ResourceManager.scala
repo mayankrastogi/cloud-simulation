@@ -1,6 +1,8 @@
 package cs441.project.cloudsim.mapreduce
 
+import ch.qos.logback.classic.Logger
 import com.typesafe.config.Config
+import com.typesafe.scalalogging.LazyLogging
 import cs441.project.cloudsim.jobs.Job
 import cs441.project.cloudsim.utils.config.MapReduceConfigReader
 import org.cloudbus.cloudsim.brokers.DatacenterBroker
@@ -10,6 +12,8 @@ import org.cloudbus.cloudsim.core.Simulation
 import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerTimeShared
 import org.cloudbus.cloudsim.vms.Vm
 import org.cloudbus.cloudsim.vms.network.NetworkVm
+import org.slf4j.LoggerFactory
+
 import scala.collection.JavaConverters._
 import scala.util.Random
 
@@ -20,20 +24,26 @@ import scala.util.Random
   * @param jobConf The id specifying the map reduce job config
   */
 
-class ResourceManager(jobConf: Int, dataCenterBroker: DatacenterBroker) extends Job {
+class ResourceManager extends Job with LazyLogging {
 
 
   //  val reducer = new Reducer
+  var mapReduceConf: MapReduceConfigReader = _
 
 
-  val mapReduceConf: MapReduceConfigReader = new MapReduceConfigReader(jobConf)
 
   var simulation: Simulation = _
 
   var mappers: List[Mapper] = _
   var reducers: List[Reducer] = _
 
+  var dataCenterBroker: DatacenterBroker = _
+
+  var workerNodes: List[NetworkVm] = _
+
+
   def allocateMappers(numberOfMappers: Int, inputSplitSize: Int, mapperSize: Long): List[Mapper] = {
+    logger.info("Sid : Allocating {} mappers", numberOfMappers)
     val mapperPES = mapReduceConf.MAPPER_PES
     (0 until numberOfMappers).map(iMapper => new Mapper(iMapper, inputSplitSize, mapperPES).run(mapperSize)).toList
 
@@ -152,7 +162,7 @@ class ResourceManager(jobConf: Int, dataCenterBroker: DatacenterBroker) extends 
 
 
     //Define the Vms/Resources on which mappers and reducers are simulated
-    val workerNodes = configureWorkerNodes()
+    workerNodes = configureWorkerNodes()
 
 
     val individualMapperSize = mapReduceConf.MAPPER_LENGTH
@@ -232,8 +242,11 @@ class ResourceManager(jobConf: Int, dataCenterBroker: DatacenterBroker) extends 
     * @param broker   Reference to the datacenter broker that the job may use for dynamic creation/submission of
     *                 cloudlets and VMs.
     */
-  override def setSimulation(configId: Int, broker: DatacenterBroker, simulation: Simulation): Unit = {
+  override def setSimulation(jobConf: Int, broker: DatacenterBroker, simulation: Simulation): Unit = {
+    mapReduceConf = new MapReduceConfigReader(jobConf)
+    dataCenterBroker = broker
     this.simulation = simulation
+    receiveJobRequest()
   }
 
   /**
@@ -243,7 +256,10 @@ class ResourceManager(jobConf: Int, dataCenterBroker: DatacenterBroker) extends 
     *
     * @return List of VMs
     */
-  override def getVmList: List[Vm] = ???
+  override def getVmList: List[Vm] = {
+    workerNodes
+  }
+
 
   /**
     * The cloudlets that this job needs to complete its execution.
@@ -252,5 +268,7 @@ class ResourceManager(jobConf: Int, dataCenterBroker: DatacenterBroker) extends 
     *
     * @return List of Cloudlets
     */
-  override def getCloudletList: List[Cloudlet] = ???
+  override def getCloudletList: List[Cloudlet] = {
+    getAllCloudlets()
+  }
 }
