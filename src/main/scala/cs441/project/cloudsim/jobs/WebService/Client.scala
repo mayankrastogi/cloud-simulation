@@ -14,10 +14,10 @@ class Client (broker: DatacenterBroker) {
 
   //Cloudlet Characteristics to be read from configuration file
   var CLOUDLET_PES:Int = 5
-  var CLOUDLET_LENGTH: Int = 50000
+  var CLOUDLET_LENGTH: Int = 10000
   var INITIAL_CLOUDLET_NUMBER: Int = 5  //Number of Cloudlets to be statically created when the simulation starts
-  var filesize:Int = 3024
-  var outputsize: Int = 5024
+  var filesize:Int = 1024
+  var outputsize: Int = 1024
 
   var cloudletList: List[Cloudlet] = (1 to INITIAL_CLOUDLET_NUMBER).map{_ => createCloudlet()}.toList
 
@@ -35,7 +35,7 @@ class Client (broker: DatacenterBroker) {
     Submit Cloudlets to Broker at Runtime
   */
   def submitRandomCloudelts(evt: EventInfo): Unit ={
-    if (random.sample() <= 0.4){
+    if (random.sample() <= 0.7){
       print("\n Randomly Creating 1 Cloudlet at time %.2f\n", evt.getTime)
       var cloudlet: Cloudlet = createCloudlet()
       cloudletList:::List(cloudlet)
@@ -47,7 +47,7 @@ class Client (broker: DatacenterBroker) {
     Creation of each Cloudlets
   */
   def createCloudlet(): Cloudlet = {
-    val um: UtilizationModel = new UtilizationModelDynamic(0.2)
+    var um: UtilizationModelDynamic = new UtilizationModelDynamic(0.8)
     return (new CloudletSimple(CLOUDLET_LENGTH,CLOUDLET_PES)
         .setFileSize(filesize)
         .setOutputSize(outputsize)

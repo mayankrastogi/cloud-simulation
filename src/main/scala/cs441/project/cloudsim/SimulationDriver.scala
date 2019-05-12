@@ -34,13 +34,13 @@ object SimulationDriver {
 
     // Load the jobs that will be run on each cloud architecture
     // TODO: Update jobs list, possibly make it dynamic
-    val jobs: List[Job] = List(new WebServiceJob_Random)
+    var jobs: List[Job] = List(new WebServiceJob_Random)
 
     // Simulate the different cloud architectures and run jobs on them
     cloudArchitectures.foreach { architectureConfig =>
 
       // Create a new simulation
-      val simulation = new CloudSim()
+      var simulation = new CloudSim()
 
       // Initialize the data centers for this simulation
       val dataCenterConfigList = DataCenterUtils.loadDataCenterConfigList(architectureConfig)

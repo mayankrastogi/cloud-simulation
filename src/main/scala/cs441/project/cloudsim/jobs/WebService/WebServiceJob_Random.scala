@@ -19,7 +19,7 @@ class WebServiceJob_Random extends Job {
   private var simulation: Simulation = _
   private var client: Client = _
   private var server: Server = _
-  private var TIME_TO_TERMINATE_SIMULATION: Int = 60 * 30
+  private var TIME_TO_TERMINATE_SIMULATION: Int = 60
 
   override def setSimulation(configId: Int, broker: DatacenterBroker, simulation: Simulation): Unit = {
     this.configId = configId
@@ -27,7 +27,7 @@ class WebServiceJob_Random extends Job {
     this.simulation = simulation
 
     this.client = new Client(broker)  //Set Client
-    this.server = new Server(simulation)  //Set Server
+    this.server = new Server(broker)  //Set Server
     simulation.terminateAt(TIME_TO_TERMINATE_SIMULATION)
 
     //submit cloudlets on each clock tick of simulation using a Uniform distribution with a probabilty of 40%
