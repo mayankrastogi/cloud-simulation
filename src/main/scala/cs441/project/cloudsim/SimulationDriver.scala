@@ -3,9 +3,10 @@ package cs441.project.cloudsim
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import cs441.project.cloudsim.jobs.Job
+import cs441.project.cloudsim.jobs.WebService.WebService
 import cs441.project.cloudsim.jobs.mapreduce.ResourceManager
 import cs441.project.cloudsim.policies.loadbalancing.{DatacenterBrokerMaxMin, DatacenterBrokerMinMin}
-import cs441.project.cloudsim.utils.config.MapReduceConfig
+import cs441.project.cloudsim.utils.config.{MapReduceConfig, WebServiceConfig}
 import cs441.project.cloudsim.utils.{DataCenterUtils, SimulationStatistics}
 import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
@@ -61,9 +62,11 @@ object SimulationDriver extends LazyLogging {
         )
 
         // Load the jobs that will be run on each cloud architecture
-        val jobs: List[Job] =
-          (1 to MapReduceConfig.getNumberOfJobs).map(_ => new ResourceManager)
-            .toList
+        val jobs: List[(Int, Job)] =
+          (0 until WebServiceConfig.getNumberOfServices).map(i => (i, new WebService))
+            .toList ++
+            (0 until MapReduceConfig.getNumberOfJobs).map(i => (i, new ResourceManager))
+              .toList
 
         // Submit the different jobs by creating a new broker for each job
         val brokers = jobs.map(submitJob(_, simulation, loadBalancer))
@@ -92,7 +95,10 @@ object SimulationDriver extends LazyLogging {
     * @param simulation The [[CloudSim]] simulation in which this job should run.
     * @return The [[DatacenterBroker]] that was created for this job.
     */
-  def submitJob(job: Job, simulation: CloudSim, loadBalancer: String): DatacenterBroker = {
+  def submitJob(jobWithIndex: (Int, Job), simulation: CloudSim, loadBalancer: String): DatacenterBroker = {
+
+    val job = jobWithIndex._2
+    val index = jobWithIndex._1
 
     // Create a new broker for this job
     val broker = loadBalancer match {
@@ -103,8 +109,7 @@ object SimulationDriver extends LazyLogging {
     broker.setName(broker.getName + job.getClass.getSimpleName)
 
     // Initialize the job
-    // TODO: Figure out proper way to send configId
-    job.setSimulation(0, broker, simulation)
+    job.setSimulation(index, broker, simulation)
 
     // Fetch the VMs and Cloudlets
     val vmList = job.getVmList
