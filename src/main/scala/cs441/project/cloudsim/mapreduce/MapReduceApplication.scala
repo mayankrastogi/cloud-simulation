@@ -28,7 +28,6 @@ object MapReduceApplication extends App {
       simulation,
       dataCenterConfigList,
       // TODO: Make VmAllocationPolicy configurable in the data center config
-      () => new VmAllocationPolicyBestFit()
     )
     val broker = new DatacenterBrokerSimple(simulation)
     val resourceManager: ResourceManager = new ResourceManager(0, broker)
