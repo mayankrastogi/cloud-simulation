@@ -29,7 +29,11 @@ class DatacenterBrokerMinMin(simulation: CloudSim, name: String) extends Datacen
     */
   override def requestDatacentersToCreateWaitingCloudlets(): Unit = {
     // Sort the cloudlets in the waiting queue using Min-min algorithm
-    val sortedCloudletList = mapCloudletsMinMin(getCloudletWaitingList[Cloudlet].asScala.toList)
+    val sortedCloudletList =
+      mapCloudletsMinMin(
+        getCloudletWaitingList[Cloudlet].asScala.toList,
+        getVmCreatedList[Vm].asScala.toList
+      )
 
     // Replace the waiting queue with the sorted list
     getCloudletWaitingList.clear()
@@ -43,12 +47,13 @@ class DatacenterBrokerMinMin(simulation: CloudSim, name: String) extends Datacen
     * Sorts a list of cloudlets using the Min-min algorithm.
     *
     * @param cloudletList The list of cloudlets in the waiting queue.
+    * @param vmList       The list of VMs created by the broker.
     * @return The sorted list of cloudlets in the waiting queue.
     */
-  def mapCloudletsMinMin(cloudletList: List[Cloudlet]): List[Cloudlet] = {
+  def mapCloudletsMinMin(cloudletList: List[Cloudlet], vmList: List[Vm]): List[Cloudlet] = {
     cloudletList
       // Estimate minimum execution times for each cloudlet
-      .map(estimateExecutionTimeAndGetMin)
+      .map(estimateExecutionTimeAndGetMin(_, vmList))
       // Zip both the lists together
       .zip(cloudletList)
       // Sort the cloudlets in ascending order of their estimated execution times
@@ -62,12 +67,12 @@ class DatacenterBrokerMinMin(simulation: CloudSim, name: String) extends Datacen
     * suitable for running the cloudlet.
     *
     * @param cloudlet The cloudlet for which the execution time is to be estimated.
+    * @param vmList   The list of VMs created by the broker.
     * @return The minimum estimated execution time.
     */
-  def estimateExecutionTimeAndGetMin(cloudlet: Cloudlet): Double = {
+  def estimateExecutionTimeAndGetMin(cloudlet: Cloudlet, vmList: List[Vm]): Double = {
     // Get list of VMs created by the broker
-    getVmCreatedList[Vm]
-      .asScala
+    vmList
       // Filter out VMs where the cloudlet cannot be executed
       .withFilter(_.isSuitableForCloudlet(cloudlet))
       // Estimate the execution time
