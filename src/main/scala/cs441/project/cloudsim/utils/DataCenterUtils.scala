@@ -213,7 +213,7 @@ object DataCenterUtils extends LazyLogging {
 
     // Create and connect the edge switches
     val edgeSwitches =
-      (1 to edgeSwitchConfig.number)
+      (0 until edgeSwitchConfig.number)
         .map { i =>
           // Create the switch
           val edgeSwitch = createSwitch[EdgeSwitch](
