@@ -22,7 +22,11 @@ In this project we aim to analyze and build various cloud architectures with mul
 
 #### Docker Image
 
-The docker image for running this project can be dound at [DockerHub](link/to/docker/image)
+The docker image for running this project can be dound at [DockerHub](https://hub.docker.com/r/mnalla2/cloudsimulationproviders)
+
+```
+docker pull mnalla2/cloudsimulationproviders
+```
 
 #### Prerequisites
 
@@ -118,5 +122,194 @@ A Random allocation policy defines the random allocation of Vms to its Hosts. Th
 
 A more sophisticated allocation policy than the Random allocation. The nearest host allocation policy will first allocate the VMs in the Same Host till the maximum utilization, once its utilization capacity is reached, it will try to allocate the VM in the same Rack through scanning the EDGE SWITCH for any under-utilized Host. If it doesn't find any Host in the Edge Switches, it will start scanning the AGGREGATE SWITCH to identify any underutilized Host. Finally, if it is not able to find the Host through the Aggregate Switches also, Then it will try to look into another datacenters with the help of ROOT SWITCH Scan and Datacenter Broker dynamic table list.   
 
-### Simulation Results and Analysis:
+### Expected Simulation Results and Analysis:
+
+We divided our analysis based on different impplementations of the allocation policies. Depending upon the combination of VM Allocation Policy and Load Balancing algorithms we implemented.
+We simulated multiple distributed jobs and web services that had myriad of executions and scheduling options. The analysis looks as follows:
+
+We have implemented and done simulations for 3  VM Allocation Policy :
+
+1. First-Fit VM allocation policy
+2. Random VM Allocation
+3. Nearest Host VM Allocation Policy
+
+
+
+We also implemented the following Load Balancer, balancing bursts of loads over the varied jobs Policy:
+
+1. Round-Robin load balancing
+2.  Min-Min Load Balancing
+3. Max-Min Load Balancing
+
+We were changing one variable at a time. Keeping other factors as constant. Essentially, we ran 3 different map-reduce jobs, 3 different web services at the same time. 
+The load on the data center was allocated randomly, with the following set of atomic executions on the machines :
+
+ Architecture: 
+ 
+ 96 Hosts per Datacenter
+
+ For Map-Reduce Job:
+
+ No of Mappers = 30 * 3 = 90
+
+ No of Reducers= 30 * 3 = 90
+ 
+ For the web services :
+ 
+ Had 3 services running with random number of clients, and auto scalable servers based on the load. 
+
+Thus, our analysis is divided into 9 parts:
+
+ **Part 1: First Fit VM Allocation and Round Robin Load Balancer** 
+
+  which will compare RoundRobin balancer and First fit VM allocation based on our dynamic job runs. 
+
+**Part 2: First Fit VM Allocation and Min-Min Load balancing**
+
+**Part 3: First Fit VM Allocation and Max-Min Load Balancing** 
+
+**Part 4:Random VM Allocation and Round Robin Load Balancer** 
+
+**Part 5: :Random VM Allocation and Min-Min Load balancing** 
+
+**Part 6: Random VM Allocation and Max-Min Load Balancing** 
+
+**Part 7: Nearest Host VM Allocation Policy and Round Robin Load Balancer** 
+
+**Part 8: Nearest Host VM Allocation Policy and Min-Min Load Balancing** 
+
+ **The expected result analysis would generate the statistical average of the executions, resource usages and the costs over large number of iterations (say 100).**
+ 
+ 
+The implementation for the above hypothesis was constructed and simulation was ran.
+
+#
+
+The following was the snapshot of the simulation results obtained. 
+
+
+
+   Result Snap:
+
+```
+================== Simulation finished at time 5370.86 ==================
+
+INFO  Simulation completed.
+
+
+                                      SIMULATION RESULTS: DatacenterBrokerSimple18ResourceManager
+
+Cloudlet|Status |DC|Host|Host PEs |VM|VM PEs   |CloudletLen|CloudletPEs|StartTime|FinishTime|ExecTime|CPU Cost|Bandwidth Cost|Total Cost
+      ID|       |ID|  ID|CPU cores|ID|CPU cores|         MI|  CPU cores|  Seconds|   Seconds| Seconds|     USD|           USD|       USD
+----------------------------------------------------------------------------------------------------------------------------------------
+       0|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+       4|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+       8|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+      12|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+      50|SUCCESS| 1|   0|        4| 0|        2|       3000|          2|        0|      4699|    4700| $ 46.99|        $ 0.10|   $ 47.19
+      90|SUCCESS| 1|   0|        4| 0|        2|       3000|          2|        0|      4699|    4700| $ 46.99|        $ 0.10|   $ 47.19
+     130|SUCCESS| 1|   0|        4| 0|        2|       3000|          2|        0|      4699|    4700| $ 46.99|        $ 0.10|   $ 47.19
+       1|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+       5|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+       9|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      13|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+       2|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+       6|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      10|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      14|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+       3|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+       7|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      11|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      15|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      20|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      60|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+     100|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+     140|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      30|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      70|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+     110|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+     150|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      40|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+      80|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+     120|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+     160|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+----------------------------------------------------------------------------------------------------------------------------------------
+INFO  Statistics for DatacenterBrokerSimple18ResourceManager for iteration 1:
+
+Cloud Architecture     : Cloud Architecture having 1 data center with 96 hosts using First-Fit VM allocation policy and Round-Robin load balancing of cloudlets
+Average Cloudlet Length: 69276569.00 MI
+Average Execution Time : 5218.95 seconds
+Average CPU Cost       : $ 52.19
+Average Bandwidth Cost : $ 0.10
+Average Total Cost     : $ 52.39
+```
+   
+The simulation kept on running based on the configs structured and generated the log files of about **10 GB**.
+
+And the aggregated statistical results were resembling the above replica like the following result summary :
+
+    ================== Simulation finished at time 5370.86 ==================
+    
+    INFO  Simulation completed.
+    
+    
+                                          SIMULATION RESULTS: DatacenterBrokerSimple18ResourceManager
+    
+    Cloudlet|Status |DC|Host|Host PEs |VM|VM PEs   |CloudletLen|CloudletPEs|StartTime|FinishTime|ExecTime|CPU Cost|Bandwidth Cost|Total Cost
+          ID|       |ID|  ID|CPU cores|ID|CPU cores|         MI|  CPU cores|  Seconds|   Seconds| Seconds|     USD|           USD|       USD
+    ----------------------------------------------------------------------------------------------------------------------------------------
+           0|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+           4|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+           8|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+          12|SUCCESS| 1|   0|        4| 0|        2|   67108864|          2|        0|      4699|    4699| $ 46.99|        $ 0.10|   $ 47.19
+          50|SUCCESS| 1|   0|        4| 0|        2|       3000|          2|        0|      4699|    4700| $ 46.99|        $ 0.10|   $ 47.19
+          90|SUCCESS| 1|   0|        4| 0|        2|       3000|          2|        0|      4699|    4700| $ 46.99|        $ 0.10|   $ 47.19
+         130|SUCCESS| 1|   0|        4| 0|        2|       3000|          2|        0|      4699|    4700| $ 46.99|        $ 0.10|   $ 47.19
+           1|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+           5|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+           9|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          13|SUCCESS| 1|   0|        4| 1|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+           2|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+           6|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          10|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          14|SUCCESS| 1|   1|        4| 2|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+           3|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+           7|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          11|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          15|SUCCESS| 1|   1|        4| 3|        2|   67108864|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          20|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          60|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+         100|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+         140|SUCCESS| 1|   0|        4| 1|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          30|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          70|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+         110|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+         150|SUCCESS| 1|   1|        4| 2|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          40|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+          80|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+         120|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+         160|SUCCESS| 1|   1|        4| 3|        2|       3000|          2|        0|      5371|    5371| $ 53.71|        $ 0.10|   $ 53.91
+    ----------------------------------------------------------------------------------------------------------------------------------------
+    INFO  Statistics for DatacenterBrokerSimple18ResourceManager for iteration 5:
+    
+    Cloud Architecture     : Cloud Architecture having 1 data center with 96 hosts using 'Nearest Host' VM allocation policy and Round-Robin load balancing of cloudlets
+    Average Cloudlet Length: 69276569.00 MI
+    Average Execution Time : 5218.95 seconds
+    Average CPU Cost       : $ 52.19
+    Average Bandwidth Cost : $ 0.10
+    Average Total Cost     : $ 52.39
+    
+  So taking rationale look at it , the following would be the possible :
+  
+  - The scheduling algorithm was successfully implemented but the jobs had overlapping traits that lead to overlapping result view
+  - The individual simulated jobs were implemented appropriately but the scheduling algorithm had overlapping events to schedule.
+
+
+# Future Work
+
+- We want to evaluate the above hypothesis comparing the simulation results on our defined configurations.
+
+- Extend the job simulations towards iterative jobs like spark and scheduling policies like delayed-scheduling
+
+- Most importantly introspect on what went wrong with such a long and exhaustive simulation.
 

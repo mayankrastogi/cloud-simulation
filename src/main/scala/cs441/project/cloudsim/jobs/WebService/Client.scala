@@ -47,7 +47,7 @@ class Client(broker: DatacenterBroker, serviceId: Int) {
   def submitRandomCloudLets(eventInfo: EventInfo): Unit = {
     val time = eventInfo.getTime.toLong
     //    if (probability == 1 && time <= 50) {
-    if (time <= clientConfig.TIME_TO_REQUESTS) {
+    if (false) {
       val numberOfCloudlets = generateClientLoad()
       println("\t#Creating %d Cloudlets at time %d.\n", numberOfCloudlets, time)
 

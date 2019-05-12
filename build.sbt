@@ -25,3 +25,6 @@ libraryDependencies ++= Seq(
   // Scalatest testing framework
   "org.scalatest" %% "scalatest" % "3.0.5" % "test",
 )
+
+mainClass in(Compile, run) := Some("cs441.project.cloudsim.SimulationDriver")
+mainClass in assembly := Some("cs441.project.cloudsim.SimulationDriver")
