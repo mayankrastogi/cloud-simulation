@@ -1,14 +1,16 @@
 package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
-import cs441.project.cloudsim.jobs.WebService.WebService
-import cs441.project.cloudsim.jobs.{Job, JobSimple}
+import com.typesafe.scalalogging.LazyLogging
+import cs441.project.cloudsim.jobs.Job
+import cs441.project.cloudsim.jobs.mapreduce.ResourceManager
+import cs441.project.cloudsim.policies.loadbalancing.{DatacenterBrokerMaxMin, DatacenterBrokerMinMin}
 import cs441.project.cloudsim.utils.DataCenterUtils
-import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyBestFit
+import cs441.project.cloudsim.utils.config.MapReduceConfig
 import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.core.CloudSim
-import org.cloudsimplus.builders.tables.CloudletsTableBuilder
+import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 
 import scala.collection.JavaConverters._
 
@@ -19,7 +21,7 @@ import scala.collection.JavaConverters._
   * submitting cloudlets to them along with the desired scheduling, load-balancing, and auto-scaling policies. The
   * results of running these jobs are printed to the console once the simulation completes for each cloud architecture.
   */
-object SimulationDriver {
+object SimulationDriver extends LazyLogging {
 
   /**
     * Entry point for the driver program.
@@ -32,31 +34,46 @@ object SimulationDriver {
     val config = ConfigFactory.load()
     val cloudArchitectures = config.getConfigList("architectures").asScala
 
-    // Load the jobs that will be run on each cloud architecture
-    // TODO: Update jobs list, possibly make it dynamic
-    var jobs: List[Job] = List(new WebService)
 
     // Simulate the different cloud architectures and run jobs on them
     cloudArchitectures.foreach { architectureConfig =>
 
-      // Create a new simulation
-      var simulation = new CloudSim()
+      val iterations = architectureConfig.getInt("iterations")
+      logger.info(s"Starting simulation for architecure: ${architectureConfig.getString("name")}")
+      logger.info(s"The simulation will run for $iterations iterations")
 
-      // Initialize the data centers for this simulation
-      val dataCenterConfigList = DataCenterUtils.loadDataCenterConfigList(architectureConfig)
-      val dataCenters = DataCenterUtils.createDataCenters(
+      // Get the load balancer to use from the config
+      val loadBalancer = architectureConfig.getString("load-balancer")
+      logger.info(s"Simulation will use load balancer: $loadBalancer")
+
+      (1 to iterations).foreach { i =>
+        logger.info(s"Initializing simulation for iteration: $i")
+
+        // Create a new simulation
+        val simulation = new CloudSim()
+
+        // Initialize the data centers for this simulation
+        val dataCenterConfigList = DataCenterUtils.loadDataCenterConfigList(architectureConfig)
+        val dataCenters = DataCenterUtils.createDataCenters(
         simulation,
-        dataCenterConfigList,
-        // TODO: Make VmAllocationPolicy configurable in the data center config
-        () => new VmAllocationPolicyBestFit()
-      )
-      dataCenters.head.setSchedulingInterval(5)
-      // Submit the different jobs by creating a new broker for each job
-      val brokers = jobs.map(submitJob(_, simulation))
+        dataCenterConfigList
+        )
 
-      // Run the simulation and print the results
-      simulation.start()
-      printResults(brokers)
+        // Load the jobs that will be run on each cloud architecture
+        val jobs: List[Job] =
+          (1 to MapReduceConfig.getNumberOfJobs).map(_ => new ResourceManager)
+            .toList
+
+        // Submit the different jobs by creating a new broker for each job
+        val brokers = jobs.map(submitJob(_, simulation, loadBalancer))
+        logger.info("Submitted creation of VMs and Cloudlets for all jobs.")
+
+        // Run the simulation and print the results
+        logger.info("Starting simulation...")
+        simulation.start()
+        logger.info("Simulation completed.")
+        printResults(brokers)
+      }
     }
   }
 
@@ -67,20 +84,22 @@ object SimulationDriver {
     * @param simulation The [[CloudSim]] simulation in which this job should run.
     * @return The [[DatacenterBroker]] that was created for this job.
     */
-  def submitJob(job: Job, simulation: CloudSim): DatacenterBroker = {
+  def submitJob(job: Job, simulation: CloudSim, loadBalancer: String): DatacenterBroker = {
 
     // Create a new broker for this job
-    val broker = new DatacenterBrokerSimple(simulation)
+    val broker = loadBalancer match {
+      case "MaxMin" => new DatacenterBrokerMaxMin(simulation)
+      case "MinMin" => new DatacenterBrokerMinMin(simulation)
+      case "Default" | _ => new DatacenterBrokerSimple(simulation)
+    }
 
     // Initialize the job
     // TODO: Figure out proper way to send configId
     job.setSimulation(0, broker, simulation)
 
-    val vmList = job.getVmList
-
-    val cloudletList = job.getCloudletList
     // Fetch the VMs and Cloudlets
-
+    val vmList = job.getVmList
+    val cloudletList = job.getCloudletList
 
     // Spin up the VMs and submit the cloudlets to them
     broker.submitVmList(vmList.asJava)
@@ -96,12 +115,13 @@ object SimulationDriver {
     * @param brokers List of brokers in the simulation.
     */
   def printResults(brokers: List[DatacenterBroker]): Unit = {
-    // TODO: Show info about bytes sent/received as well
     brokers.foreach { broker =>
       new CloudletsTableBuilder(broker.getCloudletFinishedList.asInstanceOf[java.util.List[Cloudlet]])
         .setTitle(s"SIMULATION RESULTS: ${broker.getName}")
+        .addColumn(new TextTableColumn("CPU Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getCostPerSec * cloudlet.getActualCpuTime))
+        .addColumn(new TextTableColumn("Bandwidth Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getAccumulatedBwCost))
+        .addColumn(new TextTableColumn("Total Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getTotalCost))
         .build()
     }
-
   }
 }

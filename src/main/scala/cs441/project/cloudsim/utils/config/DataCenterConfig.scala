@@ -15,6 +15,26 @@ class DataCenterConfig {
     */
   var hosts: List[HostConfig] = _
   /**
+    * Policy of the data center for allocating hosts to virtual machines.
+    */
+  @BeanProperty var vmAllocationPolicy: String = _
+  /**
+    * Monetary cost per second for using a CPU in the data center.
+    */
+  @BeanProperty var costPerSecond: Double = _
+  /**
+    * Monetary cost per Megabyte of RAM usage in the data center.
+    */
+  @BeanProperty var costPerMemory: Double = _
+  /**
+    * Monetary cost per Megabyte of file storage in the data center.
+    */
+  @BeanProperty var costPerStorage: Double = _
+  /**
+    * Monetary cost per Megabit of bandwidth in the data center.
+    */
+  @BeanProperty var costPerBandwidth: Double = _
+  /**
     * Configuration for all the [[org.cloudbus.cloudsim.network.switches.RootSwitch]]es in the data center.
     */
   @BeanProperty var rootSwitches: SwitchConfig = _
@@ -43,5 +63,5 @@ class DataCenterConfig {
     this.hosts = hosts.asScala.toList
   }
 
-  override def toString: String = s"DataCenterConfig(hosts: $hosts, rootSwitches: $rootSwitches, aggregateSwitches: $aggregateSwitches, edgeSwitches: $edgeSwitches)"
+  override def toString: String = s"DataCenterConfig(hosts: $hosts, vmAllocationPolicy: $vmAllocationPolicy, costPerSecond: $costPerSecond, costPerMemory: $costPerMemory, costPerStorage: $costPerStorage, costPerBandwidth: $costPerBandwidth, rootSwitches: $rootSwitches, aggregateSwitches: $aggregateSwitches, edgeSwitches: $edgeSwitches)"
 }

@@ -30,6 +30,10 @@ class HostConfig {
     * The number of cores present in this type of host machine.
     */
   @BeanProperty var cores: Int = _
+  /**
+    * The policy used by this type of host machine for scheduling VMs.
+    */
+  @BeanProperty var vmScheduler: String = _
 
-  override def toString: String = s"HostConfig(number: $number, ram: $ram, storage: $storage, bandwidth: $bandwidth, mips: $mips, cores: $cores)"
+  override def toString: String = s"HostConfig(number: $number, ram: $ram, storage: $storage, bandwidth: $bandwidth, mips: $mips, cores: $cores, vmScheduler: $vmScheduler)"
 }
