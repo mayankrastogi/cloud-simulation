@@ -5,8 +5,8 @@ import com.typesafe.scalalogging.LazyLogging
 import cs441.project.cloudsim.jobs.Job
 import cs441.project.cloudsim.jobs.mapreduce.ResourceManager
 import cs441.project.cloudsim.policies.loadbalancing.{DatacenterBrokerMaxMin, DatacenterBrokerMinMin}
-import cs441.project.cloudsim.utils.DataCenterUtils
 import cs441.project.cloudsim.utils.config.MapReduceConfig
+import cs441.project.cloudsim.utils.{DataCenterUtils, SimulationStatistics}
 import org.cloudbus.cloudsim.brokers.{DatacenterBroker, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.core.CloudSim
@@ -38,15 +38,16 @@ object SimulationDriver extends LazyLogging {
     // Simulate the different cloud architectures and run jobs on them
     cloudArchitectures.foreach { architectureConfig =>
 
+      val architectureName = architectureConfig.getString("name")
       val iterations = architectureConfig.getInt("iterations")
-      logger.info(s"Starting simulation for architecure: ${architectureConfig.getString("name")}")
+      logger.info(s"Starting simulation for architecure: $architectureName")
       logger.info(s"The simulation will run for $iterations iterations")
 
       // Get the load balancer to use from the config
       val loadBalancer = architectureConfig.getString("load-balancer")
       logger.info(s"Simulation will use load balancer: $loadBalancer")
 
-      (1 to iterations).foreach { i =>
+      val statsCollection = (1 to iterations).flatMap { i =>
         logger.info(s"Initializing simulation for iteration: $i")
 
         // Create a new simulation
@@ -55,8 +56,8 @@ object SimulationDriver extends LazyLogging {
         // Initialize the data centers for this simulation
         val dataCenterConfigList = DataCenterUtils.loadDataCenterConfigList(architectureConfig)
         val dataCenters = DataCenterUtils.createDataCenters(
-        simulation,
-        dataCenterConfigList
+          simulation,
+          dataCenterConfigList
         )
 
         // Load the jobs that will be run on each cloud architecture
@@ -72,7 +73,14 @@ object SimulationDriver extends LazyLogging {
         logger.info("Starting simulation...")
         simulation.start()
         logger.info("Simulation completed.")
-        printResults(brokers)
+        printResults(brokers, architectureName, i, iterations)
+      }
+
+      // Collect statistics and print them
+      val stats = consolidateStatistics(statsCollection)
+      stats.foreach { case (job, jobStats) =>
+        logger.info(s"Statistics for job: $job")
+        println(jobStats)
       }
     }
   }
@@ -92,6 +100,7 @@ object SimulationDriver extends LazyLogging {
       case "MinMin" => new DatacenterBrokerMinMin(simulation)
       case "Default" | _ => new DatacenterBrokerSimple(simulation)
     }
+    broker.setName(broker.getName + job.getClass.getSimpleName)
 
     // Initialize the job
     // TODO: Figure out proper way to send configId
@@ -114,14 +123,57 @@ object SimulationDriver extends LazyLogging {
     *
     * @param brokers List of brokers in the simulation.
     */
-  def printResults(brokers: List[DatacenterBroker]): Unit = {
-    brokers.foreach { broker =>
-      new CloudletsTableBuilder(broker.getCloudletFinishedList.asInstanceOf[java.util.List[Cloudlet]])
+  def printResults(brokers: List[DatacenterBroker], architectureName: String, iteration: Int, totalIterations: Int): List[SimulationStatistics] = {
+    brokers.map { broker =>
+      val cloudletList = broker.getCloudletFinishedList.asInstanceOf[java.util.List[Cloudlet]].asScala
+
+      new CloudletsTableBuilder(cloudletList.asJava)
         .setTitle(s"SIMULATION RESULTS: ${broker.getName}")
-        .addColumn(new TextTableColumn("CPU Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getCostPerSec * cloudlet.getActualCpuTime))
-        .addColumn(new TextTableColumn("Bandwidth Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getAccumulatedBwCost))
-        .addColumn(new TextTableColumn("Total Cost", "USD"), cloudlet => "$%.2f".format(cloudlet.getTotalCost))
+        .addColumn(new TextTableColumn("CPU Cost", "USD"), cloudlet => "$ %.2f".format(cloudlet.getCostPerSec * cloudlet.getActualCpuTime))
+        .addColumn(new TextTableColumn("Bandwidth Cost", "USD"), cloudlet => "$ %.2f".format(cloudlet.getAccumulatedBwCost))
+        .addColumn(new TextTableColumn("Total Cost", "USD"), cloudlet => "$ %.2f".format(cloudlet.getTotalCost))
         .build()
+
+      // Collect results
+      val stats = SimulationStatistics(
+        broker.getName,
+        architectureName,
+        iteration,
+        cloudletList.map(_.getTotalLength).sum / cloudletList.size,
+        cloudletList.map(cloudlet => cloudlet.getFinishTime - cloudlet.getExecStartTime).sum / cloudletList.size,
+        cloudletList.map(cloudlet => cloudlet.getActualCpuTime * cloudlet.getCostPerSec).sum / cloudletList.size,
+        cloudletList.map(_.getAccumulatedBwCost).sum / cloudletList.size,
+        cloudletList.map(_.getTotalCost).sum / cloudletList.size,
+        totalIterations
+      )
+      logger.info(s"Statistics for ${stats.jobName} for iteration $iteration:")
+      println(stats)
+      stats
     }
+  }
+
+  /**
+    * Computes the average of values from a list of simulation statistics collected over multiple iterations. The
+    * results are grouped by the job name.
+    *
+    * @param statsCollection Collection of [[SimulationStatistics]] collected over multiple runs of various jobs.
+    * @return Map with job's name as the key and its consolidated execution statistics as the value.
+    */
+  def consolidateStatistics(statsCollection: Seq[SimulationStatistics]): Map[String, SimulationStatistics] = {
+    statsCollection
+      .groupBy(_.jobName.split("\\d").last)
+      .mapValues(statsList => {
+        SimulationStatistics(
+          statsList.head.jobName,
+          statsList.head.cloudArchitecture,
+          0,
+          statsList.map(_.averageCloudletLength).sum / statsList.size,
+          statsList.map(_.averageExecutionTime).sum / statsList.size,
+          statsList.map(_.averageCPUCost).sum / statsList.size,
+          statsList.map(_.averageBandwidthCost).sum / statsList.size,
+          statsList.map(_.averageTotalCost).sum / statsList.size,
+          0
+        )
+      })
   }
 }
