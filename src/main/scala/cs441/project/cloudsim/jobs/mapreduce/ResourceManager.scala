@@ -94,7 +94,7 @@ class ResourceManager extends Job with LazyLogging {
 
     val numberOfWorkerNodes = mapReduceConf.NUMBER_OF_WORKER_NODES
     val workerNodes = createNetworkedVms(numberOfWorkerNodes)
-    dataCenterBroker.submitVmList(workerNodes.asJava, 5)
+    dataCenterBroker.submitVmList(workerNodes.asJava)
     workerNodes
 
 
