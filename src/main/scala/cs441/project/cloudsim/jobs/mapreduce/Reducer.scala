@@ -1,4 +1,4 @@
-package cs441.project.cloudsim.mapreduce
+package cs441.project.cloudsim.jobs.mapreduce
 
 import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, CloudletReceiveTask, CloudletSendTask, NetworkCloudlet}
 

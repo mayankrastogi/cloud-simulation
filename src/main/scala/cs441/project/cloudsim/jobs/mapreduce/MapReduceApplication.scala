@@ -1,4 +1,4 @@
-package cs441.project.cloudsim.mapreduce
+package cs441.project.cloudsim.jobs.mapreduce
 
 import com.typesafe.config.ConfigFactory
 import cs441.project.cloudsim.SimulationDriver.printResults

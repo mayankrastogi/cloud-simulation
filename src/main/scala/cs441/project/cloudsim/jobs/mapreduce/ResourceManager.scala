@@ -1,4 +1,4 @@
-package cs441.project.cloudsim.mapreduce
+package cs441.project.cloudsim.jobs.mapreduce
 
 import ch.qos.logback.classic.Logger
 import com.typesafe.config.Config
@@ -94,7 +94,7 @@ class ResourceManager extends Job with LazyLogging {
 
     val numberOfWorkerNodes = mapReduceConf.NUMBER_OF_WORKER_NODES
     val workerNodes = createNetworkedVms(numberOfWorkerNodes)
-    dataCenterBroker.submitVmList(workerNodes.asJava)
+    dataCenterBroker.submitVmList(workerNodes.asJava, 5)
     workerNodes
 
 
