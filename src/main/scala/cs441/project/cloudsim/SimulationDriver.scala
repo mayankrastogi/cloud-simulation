@@ -1,6 +1,7 @@
 package cs441.project.cloudsim
 
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.LazyLogging
 import cs441.project.cloudsim.jobs.{Job, JobSimple}
 import cs441.project.cloudsim.policies.loadbalancing.DatacenterBrokerMaxMin
 import cs441.project.cloudsim.utils.DataCenterUtils
@@ -8,6 +9,7 @@ import org.cloudbus.cloudsim.brokers.DatacenterBroker
 import org.cloudbus.cloudsim.cloudlets.Cloudlet
 import org.cloudbus.cloudsim.core.CloudSim
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
@@ -18,7 +20,7 @@ import scala.collection.JavaConverters._
   * submitting cloudlets to them along with the desired scheduling, load-balancing, and auto-scaling policies. The
   * results of running these jobs are printed to the console once the simulation completes for each cloud architecture.
   */
-object SimulationDriver {
+object SimulationDriver extends LazyLogging{
 
   /**
     * Entry point for the driver program.
@@ -26,6 +28,7 @@ object SimulationDriver {
     * @param args Command-line arguments to the program.
     */
   def main(args: Array[String]): Unit = {
+
 
     // Load the main config file that defines the cloud architectures that will be simulated
     val config = ConfigFactory.load()
