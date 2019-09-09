@@ -1,5 +1,5 @@
 ## CS 441 - Engineering Distributed Objects for Cloud Computing
-## Course Project - Cloud Simulation using Cloudsim-Plus
+## Course Project - Cloud Simulation using [CloudSim Plus](http://cloudsimplus.org)
 
 ---
 
